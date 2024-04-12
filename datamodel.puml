@@ -1,0 +1,187 @@
+@startuml
+' hide the spot
+' hide circle
+' avoid problems with angled crows feet
+skinparam linetype ortho
+
+entity "Organization" as org {
+  *org_id : number <<generated>>
+  --
+  *tenant_external_id : varchar
+  name : varchar
+  description : varchar
+}
+
+entity "Bookkeep" as book {
+    *bookkeep_id : number <<generated>>
+    --
+    *bookkeep_timestamp : timestamp
+}
+
+entity "Export" as exp {
+    *export_id : number <<generated>>
+    --
+    *bookkeep_id : number <<FK>>
+    *export_time : timestamp
+    *export_method : varchar
+    *success : bool
+}
+
+entity "Invoice" as inv {
+  *invoice_id : number <<generated>>
+  --
+  *invoice_number : varchar
+  *invoice_date : datetime
+  invoice_due_date : datetime
+  *invoice_type : enum
+  *customer_external_id : varchar
+  *total_amount : number
+  *total_amount_incl_vat : number
+  *total_vat : number
+  remaining_amount : number
+  customer_number : varchar
+  customer_name : varchar
+  customer_email : varchar
+  customer_phone : varchar
+  customer_mobile : varchar
+  company_name : varchar
+  company_vat_number : varchar
+  address_name : varchar
+  address_1 : varchar
+  address_2 : varchar
+  address_city : varchar
+  address_postal_code : varchar
+  *address_country : varchar
+  *locale : varchar
+  our_reference : varchar
+  your_reference : varchar
+  order_external_id : varchar
+  message : varchar
+  payment_terms_id : number <<FK>>
+  template_id : number <<FK>>
+  bookkeep_id : number <<FK>>
+  org_id : number <<FK>>
+}
+
+entity "InvoiceReminder" as invRem {
+    *reminder_id : number <<generated>>
+    --
+    *invoice_id : number <<FK>>
+    *date_sent : datetime
+    severity : varchar
+}
+
+
+entity "LineItem" as li {
+  *line_item_id : number <<generated>>
+  *invoice_id : number <<FK>>
+  *unit_id : number <<FK>>
+  --
+  article_id : number
+  description : varchar
+  unit_price : number
+  quantity : number
+  total_price_incl_vat : number
+  total_price : number
+  total_vat : number
+  object_external_id : varchar
+}
+
+entity "Article" as art {
+  *article_id : number <<generated>>
+  --
+  *article_name : varchar
+  article_description : varchar
+  unit_id : number <<FK>>
+  *org_id : number <<FK>>
+}
+
+entity "Unit" as unit {
+    *unit_id : number <<generated>>
+    --
+    *name : varchar
+}
+
+entity "Payment" as p {
+  *payment_id : number <<generated>>
+  --
+  *invoice_id : number <<FK>>
+  *customer_external_id : varchar
+  *amount : number
+  *currency : char[3]
+  *payment_date : date
+  *payment_method_id : number <<FK>>
+  bookkeep_id : number <<FK>>
+
+}
+
+entity "Netting" as net {
+    *netting_id : number <<generated>>
+    --
+    *from_invoice_id : number <<FK>>
+    *to_invoice_id : number <<FK>>
+    *amount : number
+    *currency : char[3]
+    *payment_date : date
+    bookkeep_id : number <<FK>>
+}
+
+entity "PaymentMethod" as pm {
+    *payment_method_id : number <<generated>>
+    --
+    name : varchar
+    *account_id : number <<FK>>
+}
+
+entity "Account" as acc {
+    *account_id : number <<generated>>
+    --
+    *account_number : varchar
+    *name : varchar
+    *account_type_id : number <<FK>>
+}
+
+entity "AccountType" as accType {
+    *account_type_id : number <<generated>>
+    --
+    *name : varchar
+    description : varchar
+    org_id : number <<FK>>
+    
+}
+
+entity "InvoiceTemplate" as invTemp {
+    *template_id : number <<generated>>
+    --
+    header : varchar
+    address : varchar
+    payment_details : varchar
+    footer : varchar
+}
+
+org }o--|| inv
+org }o--|| art
+org }o--|| accType
+
+
+
+li ||--o{ inv
+li ||--o{ art
+p ||--o{ inv
+p ||--o{ pm
+pm ||--o{ acc
+net ||--o{ inv
+acc ||--o{ accType
+inv ||--o{ invTemp
+inv }o--|| invRem
+li ||--o{ unit
+art ||--o{ unit
+
+inv |o--o{ book
+p |o--o{ book
+net |o--o{ book
+
+book }o--|| exp
+
+
+@enduml

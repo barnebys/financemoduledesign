@@ -1,0 +1,659 @@
+openapi: 3.0.3
+info:
+  title: Skeleton Finance Module
+  description: The API for the finance module in Skeleton
+  version: 0.0.1
+servers:
+  - url: 'https://example.com'
+tags:
+  - name: Imports
+    description: Importing data
+  - name: Settings
+    description: Settings for the finance module
+  - name: Reports
+    description: Reports for the finance module
+  - name: Exports
+    description: Exporting data
+paths:
+  # Invoices
+  /api/invoices:
+    post:
+      description: Create a new invoice
+      tags:
+        - Imports
+      requestBody:
+        $ref: '#/components/requestBodies/createInvoiceRequest'
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/invoiceInfo'
+  
+  "/api/invoices/{invoiceId}/crediting":
+    description: Create a new credit invoice that completely offsets the original invoice. Does not move any payments.
+    parameters:
+      - name: invoiceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - Imports
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/invoiceInfo'
+  
+  "/api/invoices/{invoiceId}/payments":
+    description: Create a new payment for an invoice
+    parameters:
+      - name: invoiceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - Imports
+      requestBody:
+        $ref: '#/components/requestBodies/createPaymentRequest'
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paymentInfo'
+  
+  
+  
+  
+  "/api/invoices/{invoiceId}/net/{otherInvoiceId}":
+    description: Create a new netting between two invoices. I.e. creates a new payment by offset the two invoices.
+    parameters:
+      - name: invoiceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: otherInvoiceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - Imports
+      requestBody:
+        $ref: '#/components/requestBodies/createNettingRequest'
+      responses:
+        '201':
+          description: Created
+  
+  
+  # Kontoplan
+  /api/settings/chartOfAccounts:
+    get:
+      tags:
+        - Settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/account'
+    post:
+      tags:
+        - Settings
+      requestBody:
+        $ref: '#/components/requestBodies/createAccountRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/accountInfo'
+  "/api/settings/chartOfAccounts/{accountId}":
+    parameters:
+      - name: accountId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - Settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/account'
+    put:
+      tags:
+        - Settings
+      requestBody:
+        $ref: '#/components/requestBodies/createAccountRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/accountInfo'
+    delete:
+      tags:
+        - Settings
+      responses:
+        '204':
+          description: No Content
+  
+  /api/settings/accountTypes:
+    get:
+      tags:
+        - Settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/accountType'
+  
+  # VAT                  
+  /api/settings/vat:
+    get:
+      tags:
+        - Settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/vat'
+  
+  # Invoice Templates              
+  /api/settings/templates/invoices:
+    get:
+      tags:
+        - Settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/invoiceTemplate'
+
+  # Payment types
+  # Might need additional endpoints for connecting to chart of accounts
+  # and bank info/account number etc.
+  /api/settings/paymentMethods:
+    get:
+      tags:
+        - Settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/paymentMethod'
+  
+  # Articles
+  /api/settings/articles:
+    get:
+      tags:
+        - Settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/article'
+  
+  # Periods
+  /api/settings/periods:
+    get:
+      tags:
+        - Settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/period'
+  
+  
+  # Export CSV
+  /api/settings/export:
+    post:
+      tags:
+        - Exports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                startDate:
+                  type: string
+                  format: date-time
+                endDate:
+                  type: string
+                  format: date-time
+                fileType:
+                  type: string
+                  enum:
+                    - csv
+                    - sie
+      responses:
+        '200':
+          description: OK
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            text/sie:
+              schema:
+                type: string
+                format: binary
+  
+  
+  # OSS Report
+  /api/vat/oss:
+    get:
+      tags:
+        - Exports
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/vatOssReport'
+  # Periodisk sammanställning
+  /api/vat/recapitulative:
+    get:
+      tags:
+        - Exports
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/vatRecapitulativeStatement'
+  
+  /api/payments:
+    get:
+      tags:
+        - Reports
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/paymentWithId'
+components:
+  # Request Bodies
+  requestBodies:
+    createInvoiceRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/invoice'
+    createPaymentRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/payment'
+    createNettingRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/netting'
+    createAccountRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/account'
+    createInvoiceTemplateRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/invoiceTemplate'
+    updateInvoiceTemplateRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/invoiceTemplate'
+  schemas:
+    netting:
+      type: object
+      properties:
+        amount:
+          type: number
+        payDate:
+          type: string
+          format: date-time
+    # Invoice Data
+    invoice:
+      type: object
+      properties:
+        invoiceType:
+          description: "Specifies what type of Debet Invoice this is, since a Sellers invoice isn't a Credit invoice."
+          required: true
+          type: string
+          enum:
+            - Buyer
+            - Seller
+            - Other
+        
+        customer:
+          $ref: '#/components/schemas/customer'
+        lineItems:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/lineItem'
+              - type: string
+        ourReference:
+          type: string
+        yourReference:
+          type: string
+        externalOrderId:
+          description: "The external order reference, e.g. the order number."
+          type: string
+        paymentTerms:
+          type: object
+          required: true
+        message:
+          description: "A message to the customer."
+          type: string
+    
+    customer:
+      type: object
+      properties:
+        customerReference:
+          description: "A stable customer's reference, e.g. customer Id. Not Customer Number."
+          type: string
+        customerNumber:
+          description: "The customer's number, to be shown on the Invoice."
+          type: string
+        name:
+          type: string
+        email: # Is this the invoice email, or something else?
+          type: string
+          format: email
+        phone:
+          type: string
+        mobilePhone:
+          type: string
+        companyInformation:
+          type: object
+          properties:
+            companyName:
+              type: string
+            vatNumber:
+              type: string
+        invoiceAddress:
+          $ref: '#/components/schemas/address'
+        locale:
+          type: string
+
+    address:
+      type: object
+      properties:
+        name:
+          type: string
+        address1:
+          type: string
+        address2:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        country:
+          type: string
+    lineItem:
+      type: object
+      properties:
+        articleId:
+          type: string
+          format: uuid
+        description:
+          type: string
+        unitPrice:
+          type: number
+        quantity:
+          type: number
+        externalObjectId:
+          description: "The external object reference, e.g. the order line number."
+          type: string
+
+
+
+    # Invoice Id
+    invoiceInfo:
+      type: object
+      properties:
+        invoiceId:
+          type: string
+          format: uuid
+        invoiceNumber:
+          type: string
+        eventDate:
+          type: string
+          format: date-time
+
+    # Payment Data
+    payment:
+      type: object
+      properties:
+        amount:
+          type: number
+        paymentDate:
+          type: string
+          format: date
+        paymentType:
+          type: string
+          enum:
+            - Full
+            - Partial
+            - Rounding
+        bankAccountId:
+          type: string
+          format: uuid
+    
+    paymentWithId:
+      type: object
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        eventDate:
+          type: string
+          format: date-time
+        amount:
+          type: number
+        paymentDate:
+          type: string
+          format: date
+        paymentType:
+          type: string
+          enum:
+            - Full
+            - Partial
+            - Rounding
+        bankAccountId:
+          type: string
+          format: uuid
+    
+    # Payment Id
+    paymentInfo:
+      type: object
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        eventDate:
+          type: string
+          format: date-time
+
+    # Settings
+    account:
+      type: object
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        accountNumber:
+          type: string
+        accountName:
+          type: string
+        accountTypeId:
+          description: "The type of account, e.g. 'Income', 'Expense', 'Asset', 'Liability', 'Equity'. Linked to a parent type."
+          type: string
+          format: uuid
+    
+    accountInfo:
+      type: object
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        eventDate:
+          type: string
+          format: date-time
+
+    accountType:
+      type: object
+      properties:
+        accountTypeId:
+          type: string
+          format: uuid
+        accountTypeName:
+          type: string
+
+    accountTypeInfo:
+      type: object
+      properties:
+        accountTypeId:
+          type: string
+          format: uuid
+        eventDate:
+          type: string
+          format: date-time
+    
+    
+    invoiceTemplate:
+      type: object
+    invoiceTemplateInfo:
+      type: object
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        eventDate:
+          type: string
+          format: date-time
+    paymentMethod:
+      type: object
+      properties:
+        paymentMethodId:
+          type: string
+          format: uuid
+        paymentMethodName:
+          type: string
+        accountId:
+          type: string
+          format: uuid
+    article:
+      # No VAT linkage right now, as it's very implementation
+      # dependent so we leave it for now. 
+      # This cannot be a single link, but more of a rule engine.
+      type: object
+      properties:
+        articleId:
+          type: string
+          format: uuid
+        articleName:
+          type: string
+        articleDescription:
+          type: string
+    
+    period:
+      type: object
+    
+    eventLog:
+      type: object
+    vat:
+      type: object
+      properties:
+        vatId:
+          type: string
+          format: uuid
+        description:
+          type: string
+        vatRate:
+          type: number
+          format: float
+        vatType:
+          type: string
+    
+    # Exports
+    vatOssReport:
+      type: object
+    vatRecapitulativeStatement:
+      type: object
