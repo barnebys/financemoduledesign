@@ -12,16 +12,16 @@ entity "Organization" as org {
   description : varchar
 }
 
-entity "Bookkeep" as book {
-    *bookkeep_id : number <<generated>>
+entity "Journaling" as jour {
+    *journal_id : number <<generated>>
     --
-    *bookkeep_timestamp : timestamp
+    *journal_timestamp : timestamp
 }
 
 entity "Export" as exp {
     *export_id : number <<generated>>
     --
-    *bookkeep_id : number <<FK>>
+    *journal_id : number <<FK>>
     *export_time : timestamp
     *export_method : varchar
     *success : bool
@@ -59,7 +59,8 @@ entity "Invoice" as inv {
   message : varchar
   payment_terms_id : number <<FK>>
   template_id : number <<FK>>
-  bookkeep_id : number <<FK>>
+  cost_center : varchar
+  journal_id : number <<FK>>
   org_id : number <<FK>>
 }
 
@@ -81,8 +82,8 @@ entity "LineItem" as li {
   description : varchar
   unit_price : number
   quantity : number
-  total_price_incl_vat : number
   total_price : number
+  total_price_incl_vat : number
   total_vat : number
   object_external_id : varchar
 }
@@ -94,6 +95,22 @@ entity "Article" as art {
   article_description : varchar
   unit_id : number <<FK>>
   *org_id : number <<FK>>
+  *article_category_id : number <<FK>>
+}
+
+entity "ArticleCategory" as artCat {
+   *article_category_id : number <<generated>>
+   --
+   *name : varchar 
+}
+
+entity "ArticleAccountRule" as aar {
+    article_account_rule_id : number <<generated>>
+    --
+    rule_type : enum
+    vat_rate : number
+    account : varchar
+    vat_account : varchar
 }
 
 entity "Unit" as unit {
@@ -111,19 +128,8 @@ entity "Payment" as p {
   *currency : char[3]
   *payment_date : date
   *payment_method_id : number <<FK>>
-  bookkeep_id : number <<FK>>
+  journal_id : number <<FK>>
 
-}
-
-entity "Netting" as net {
-    *netting_id : number <<generated>>
-    --
-    *from_invoice_id : number <<FK>>
-    *to_invoice_id : number <<FK>>
-    *amount : number
-    *currency : char[3]
-    *payment_date : date
-    bookkeep_id : number <<FK>>
 }
 
 entity "PaymentMethod" as pm {
@@ -159,29 +165,30 @@ entity "InvoiceTemplate" as invTemp {
     footer : varchar
 }
 
-org }o--|| inv
-org }o--|| art
-org }o--|| accType
+org ||--o{ inv
+org ||--o{ art
+org ||--o{ accType
 
+inv ||--o{ li
+art ||--o{ li
 
+inv ||--o{ p
+pm ||--o{ p
 
-li ||--o{ inv
-li ||--o{ art
-p ||--o{ inv
-p ||--o{ pm
-pm ||--o{ acc
-net ||--o{ inv
-acc ||--o{ accType
-inv ||--o{ invTemp
-inv }o--|| invRem
-li ||--o{ unit
-art ||--o{ unit
+acc ||--o{ pm
+acc }o--|| accType
+inv }o--|| invTemp
+inv ||--o{ invRem
 
-inv |o--o{ book
-p |o--o{ book
-net |o--o{ book
+li }o--|| unit
+art }o--|| unit
 
-book }o--|| exp
+inv }o--o| jour
+p }o--o| jour
+
+exp }o--|| jour
+art }o--|| artCat
+artCat ||--o{ aar
 
 
 @enduml
