@@ -1,4 +1,4 @@
-# Finance Module Design
+# [Finance Module Design](https://barnebys.github.io/financemoduledesign/)
 
 ## PlantUML
 There are plugins to most IDE's, and you can download [standalone binaries](https://plantuml.com/download).
@@ -11,7 +11,7 @@ You can use the Swagger Editor at https://editor.swagger.io/ to edit the YAML fi
 
 
 # Data Model
-![Data model as rendered by puml](/media/datamodel.svg)
+[![Data model as rendered by puml](/media/datamodel.svg)](https://barnebys.github.io/financemoduledesign/media/datamodel.svg)
 
 # Rest Api
 [A swagger UI is available](https://barnebys.github.io/financemoduledesign/dist)
