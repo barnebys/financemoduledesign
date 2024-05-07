@@ -37,7 +37,6 @@ paths:
                 $ref: '#/components/schemas/invoiceInfo'
   
   "/api/invoices/{invoiceId}/crediting":
-    description: Create a new credit invoice that completely offsets the original invoice. Does not move any payments.
     parameters:
       - name: invoiceId
         in: path
@@ -46,6 +45,7 @@ paths:
           type: string
           format: uuid
     post:
+      description: Create a new credit invoice that completely offsets the original invoice. Does not move any payments.
       tags:
         - Imports
       responses:
@@ -62,7 +62,6 @@ paths:
                 $ref: '#/components/schemas/invoiceInfo'
   
   "/api/invoices/{invoiceId}/payments":
-    description: Create a new payment for an invoice
     parameters:
       - name: invoiceId
         in: path
@@ -71,6 +70,7 @@ paths:
           type: string
           format: uuid
     post:
+      description: Create a new payment for an invoice
       tags:
         - Imports
       requestBody:
@@ -90,34 +90,8 @@ paths:
   
   
   
-  
-  "/api/invoices/{invoiceId}/net/{otherInvoiceId}":
-    description: Create a new netting between two invoices. I.e. creates a new payment by offset the two invoices.
-    parameters:
-      - name: invoiceId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: otherInvoiceId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-    post:
-      tags:
-        - Imports
-      requestBody:
-        $ref: '#/components/requestBodies/createNettingRequest'
-      responses:
-        '201':
-          description: Created
-  
-  
-  # Kontoplan
-  /api/settings/chartOfAccounts:
+  # Articles
+  /api/settings/articles:
     get:
       tags:
         - Settings
@@ -129,26 +103,20 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/account'
+                  $ref: '#/components/schemas/article'
     post:
       tags:
         - Settings
-      requestBody:
-        $ref: '#/components/requestBodies/createAccountRequest'
+      requestBody: 
+        $ref: '#/components/requestBodies/createArticle'
       responses:
-        '201':
-          description: Created
+        '200':
+          description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/accountInfo'
-  "/api/settings/chartOfAccounts/{accountId}":
-    parameters:
-      - name: accountId
-        in: path
-        required: true
-        schema:
-          type: string
+                $ref: '#/components/schemas/articleLocation'
+  "/api/settings/articles/{articleId}":
     get:
       tags:
         - Settings
@@ -158,55 +126,28 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/account'
+                $ref: '#/components/schemas/article'
     put:
       tags:
         - Settings
       requestBody:
-        $ref: '#/components/requestBodies/createAccountRequest'
+        $ref: '#/components/requestBodies/updateArticle'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/accountInfo'
+                type: array
+                items:
+                  $ref: '#/components/schemas/articleLocation'
     delete:
       tags:
         - Settings
       responses:
         '204':
           description: No Content
-  
-  /api/settings/accountTypes:
-    get:
-      tags:
-        - Settings
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/accountType'
-  
-  # VAT                  
-  /api/settings/vat:
-    get:
-      tags:
-        - Settings
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/vat'
-  
+
   # Invoice Templates              
   /api/settings/templates/invoices:
     get:
@@ -238,99 +179,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/paymentMethod'
-  
-  # Articles
-  /api/settings/articles:
-    get:
-      tags:
-        - Settings
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/article'
-  
-  # Periods
-  /api/settings/periods:
-    get:
-      tags:
-        - Settings
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/period'
-  
-  
-  # Export CSV
-  /api/settings/export:
-    post:
-      tags:
-        - Exports
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                startDate:
-                  type: string
-                  format: date-time
-                endDate:
-                  type: string
-                  format: date-time
-                fileType:
-                  type: string
-                  enum:
-                    - csv
-                    - sie
-      responses:
-        '200':
-          description: OK
-          content:
-            text/csv:
-              schema:
-                type: string
-                format: binary
-            text/sie:
-              schema:
-                type: string
-                format: binary
-  
-  
-  # OSS Report
-  /api/vat/oss:
-    get:
-      tags:
-        - Exports
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/vatOssReport'
-  # Periodisk sammanställning
-  /api/vat/recapitulative:
-    get:
-      tags:
-        - Exports
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/vatRecapitulativeStatement'
-  
+
   /api/payments:
     get:
       tags:
@@ -344,6 +193,65 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/paymentWithId'
+  
+  
+  # Create journal
+  /api/journals:
+    post:
+      tags:
+        - Exports
+      requestBody: 
+        content: 
+          application/json:
+            schema:
+              type: object
+              properties: 
+                invoices:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses: 
+        '200':
+          description: OK
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  journalId:
+                    type: string
+                    format: uuid
+  
+  
+  # Exporting
+  "/api/export/{journalId}":
+    parameters:
+      - name: journalId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      description: Get the journal in CSV or SIE format. Format is specified in the Accept header.
+      tags:
+        - Exports
+      responses:
+        '200':
+          description: OK
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            text/sie:
+              schema:
+                type: string
+                format: binary
+
+
+
 components:
   # Request Bodies
   requestBodies:
@@ -357,6 +265,11 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/payment'
+    createArticle:
+      content:
+        application/json:
+          schema: 
+            $ref: '#/components/schemas/newArticle'
     createNettingRequest:
       content:
         application/json:
@@ -377,6 +290,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/invoiceTemplate'
+    updateArticle:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/article'
+            
   schemas:
     netting:
       type: object
@@ -391,8 +310,7 @@ components:
       type: object
       properties:
         invoiceType:
-          description: "Specifies what type of Debet Invoice this is, since a Sellers invoice isn't a Credit invoice."
-          required: true
+          description: "Specifies what type of Debit Invoice this is, since a Sellers invoice isn't a Credit invoice."
           type: string
           enum:
             - Buyer
@@ -416,7 +334,6 @@ components:
           type: string
         paymentTerms:
           type: object
-          required: true
         message:
           description: "A message to the customer."
           type: string
@@ -503,6 +420,8 @@ components:
       properties:
         amount:
           type: number
+        currency:
+          type: string
         paymentDate:
           type: string
           format: date
@@ -512,9 +431,8 @@ components:
             - Full
             - Partial
             - Rounding
-        bankAccountId:
+        paymentMethod:
           type: string
-          format: uuid
     
     paymentWithId:
       type: object
@@ -527,6 +445,8 @@ components:
           format: date-time
         amount:
           type: number
+        currency:
+          type: string
         paymentDate:
           type: string
           format: date
@@ -536,9 +456,8 @@ components:
             - Full
             - Partial
             - Rounding
-        bankAccountId:
+        paymentMethod:
           type: string
-          format: uuid
     
     # Payment Id
     paymentInfo:
@@ -632,6 +551,25 @@ components:
           type: string
         articleDescription:
           type: string
+    newArticle:
+      # No VAT linkage right now, as it's very implementation
+      # dependent so we leave it for now. 
+      # This cannot be a single link, but more of a rule engine.
+      type: object
+      properties:
+        articleName:
+          type: string
+        articleDescription:
+          type: string
+    articleLocation:
+      type: object
+      properties: 
+        articleId:
+          type: string
+          format: uuid
+        eventDate:
+          type: string
+          format: date-time
     
     period:
       type: object
