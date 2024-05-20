@@ -35,7 +35,7 @@ entity "Invoice" as inv {
   invoice_due_date : datetime
   *invoice_type : enum
   *customer_external_id : varchar
-  *total_amount : number
+  *total_amount_excl_vat : number
   *total_amount_incl_vat : number
   *total_vat : number
   remaining_amount : number
@@ -79,13 +79,19 @@ entity "LineItem" as li {
   *unit_id : number <<FK>>
   --
   article_id : number
-  description : varchar
   unit_price : number
   quantity : number
-  total_price : number
+  total_price_excl_vat : number
   total_price_incl_vat : number
   total_vat : number
   object_external_id : varchar
+}
+
+entity "LineItemDescription" as lid {
+    *line_item_id : number <<FK>>
+    locale : varchar
+    --
+    description : varchar
 }
 
 entity "Article" as art {
@@ -96,10 +102,12 @@ entity "Article" as art {
   unit_id : number <<FK>>
   *org_id : number <<FK>>
   *article_category_id : number <<FK>>
+  article_external_id : varchar
 }
 
 entity "ArticleCategory" as artCat {
    *article_category_id : number <<generated>>
+   *country : varchar
    --
    *name : varchar 
 }
@@ -158,11 +166,13 @@ entity "AccountType" as accType {
 
 entity "InvoiceTemplate" as invTemp {
     *template_id : number <<generated>>
+    *locale: varchar
     --
     header : varchar
     address : varchar
     payment_details : varchar
     footer : varchar
+  
 }
 
 org ||--o{ inv
@@ -171,6 +181,8 @@ org ||--o{ accType
 
 inv ||--o{ li
 art ||--o{ li
+
+li ||--o{ lid
 
 inv ||--o{ p
 pm ||--o{ p
